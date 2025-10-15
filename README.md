@@ -87,7 +87,6 @@ mix track_upstream <args>
 Create a `.track_upstream_config.md` file in your downstream project directory. This file should contain:
 
 - Upstream and downstream project names and abbreviations
-- Repository paths
 - Porting constraints specific to your project
 
 ### Configuration File Format
@@ -106,7 +105,6 @@ The configuration file uses markdown format with specific sections:
 
 **Name:** [Your Project Name]
 **Abbreviation:** [abbrev]
-**Repository Path:** .
 
 ## Porting Constraints
 
@@ -127,7 +125,7 @@ IMPORTANT CONSTRAINTS when porting from upstream to downstream:
 ### Basic Syntax
 
 ```bash
-mix track_upstream <upstream_start_rev> <upstream_end_rev> <downstream_rev> [options]
+mix track_upstream <upstream_start_rev> <upstream_end_rev> <downstream_rev> --upstream-dir <path>
 ```
 
 ### Arguments
@@ -135,10 +133,7 @@ mix track_upstream <upstream_start_rev> <upstream_end_rev> <downstream_rev> [opt
 - `upstream_start_rev` - Upstream starting revision (e.g., v2.0.0, commit hash, branch name)
 - `upstream_end_rev` - Upstream ending revision (e.g., main, v2.1.0, commit hash)
 - `downstream_rev` - Downstream revision to compare against (e.g., main, commit hash)
-
-### Options
-
-- `--upstream-dir <path>` - Path to upstream repository (overrides config file)
+- `--upstream-dir <path>` - Path to upstream repository
 
 ### Typical Workflow
 
@@ -151,7 +146,7 @@ git checkout -b port-upstream-changes
 
 # 3. Run track_upstream to analyze changes
 # Compare upstream's v2.0.0 tag to current main, against your current main
-mix track_upstream v2.0.0 main main
+mix track_upstream v2.0.0 main main --upstream-dir ../upstream-repo
 
 # This generates:
 # - UPSTREAM_PORTING_GUIDE.md (your main reference)
@@ -178,13 +173,13 @@ The guide includes:
 
 ```bash
 # Compare specific commit range
-mix track_upstream abc123 def456 main
+mix track_upstream abc123 def456 main --upstream-dir ../upstream-repo
 
-# Specify upstream directory explicitly (if not using config file)
-mix track_upstream v2.0.0 main main --upstream-dir ../upstream-repo
+# Use absolute path for upstream directory
+mix track_upstream v2.0.0 main main --upstream-dir /path/to/upstream-repo
 
 # Compare against a specific downstream commit
-mix track_upstream v2.0.0 main 5905fd1
+mix track_upstream v2.0.0 main 5905fd1 --upstream-dir ../upstream-repo
 ```
 
 ## Requirements
@@ -304,7 +299,7 @@ mix archive.install
 
 # Test the installed command
 cd /path/to/test/project
-mix track_upstream v2.0.0 main main
+mix track_upstream v2.0.0 main main --upstream-dir ../upstream-repo
 ```
 
 ## License

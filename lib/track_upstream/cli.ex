@@ -19,12 +19,19 @@ defmodule TrackUpstream.CLI do
     Config.validate!()
 
     analyze = Keyword.get(opts, :analyze, false)
-    plv_dir = "../phoenix_live_view"
+    upstream_dir = Keyword.get(opts, :upstream_dir)
+
+    unless upstream_dir do
+      IO.puts("Error: --upstream-dir is required")
+      System.halt(1)
+    end
+
+    plv_dir = upstream_dir
     lvn_dir = "."
 
     IO.puts("Finding closest file matches...")
-    IO.puts("Phoenix LiveView: #{plv_start_rev} -> #{plv_end_rev} (in #{plv_dir})")
-    IO.puts("LiveView Native: #{lvn_start_rev} (in #{lvn_dir})")
+    IO.puts("Upstream: #{plv_start_rev} -> #{plv_end_rev} (in #{plv_dir})")
+    IO.puts("Downstream: #{lvn_start_rev} (in #{lvn_dir})")
     IO.puts("")
 
     # Get list of Elixir files from both repos
@@ -38,14 +45,14 @@ defmodule TrackUpstream.CLI do
     newly_added_files = MapSet.difference(plv_end_set, plv_start_set) |> MapSet.to_list()
 
     IO.puts("Analyzing file similarities...")
-    IO.puts("Phoenix LiveView #{plv_start_rev} files: #{length(plv_start_files)}")
-    IO.puts("Phoenix LiveView #{plv_end_rev} files: #{length(plv_end_files)}")
-    IO.puts("Newly added in PLV: #{length(newly_added_files)}")
-    IO.puts("LiveView Native files: #{length(lvn_start_files)}")
+    IO.puts("Upstream #{plv_start_rev} files: #{length(plv_start_files)}")
+    IO.puts("Upstream #{plv_end_rev} files: #{length(plv_end_files)}")
+    IO.puts("Newly added in upstream: #{length(newly_added_files)}")
+    IO.puts("Downstream files: #{length(lvn_start_files)}")
     IO.puts("")
 
-    # For each Phoenix LiveView start file, find the closest match
-    IO.puts("Matching existing PLV files...")
+    # For each upstream start file, find the closest match
+    IO.puts("Matching existing upstream files...")
     concurrency = Config.analysis_config().concurrency
 
     existing_results =
@@ -68,12 +75,12 @@ defmodule TrackUpstream.CLI do
       |> Enum.filter(& &1)
       |> Enum.sort_by(fn {_plv, _lvn, similarity, _verification} -> -similarity end)
 
-    # Build a set of LVN files already matched to existing PLV files
+    # Build a set of downstream files already matched to existing upstream files
     already_matched_lvn_files =
       MapSet.new(existing_results, fn {_plv, lvn, _sim, _verification} -> lvn end)
 
-    # For newly added files, try to find potential matches in LVN
-    IO.puts("\nAnalyzing newly added PLV files...")
+    # For newly added files, try to find potential matches in downstream
+    IO.puts("\nAnalyzing newly added upstream files...")
 
     new_file_results =
       newly_added_files
@@ -127,7 +134,7 @@ defmodule TrackUpstream.CLI do
     new_no_match =
       newly_added_files -- Enum.map(new_file_results, fn {plv, _, _, _verification} -> plv end)
 
-    # For claimed matches, find the original PLV file
+    # For claimed matches, find the original upstream file
     new_with_claimed_annotated =
       Enum.map(new_with_claimed_match, fn {new_plv, lvn, sim, verification} ->
         original_plv = Enum.find(existing_results, fn {_plv, lvn_file, _, _} -> lvn_file == lvn end)
@@ -273,8 +280,8 @@ defmodule TrackUpstream.CLI do
 
     IO.puts("")
     IO.puts("=" |> String.duplicate(80))
-    IO.puts("NEWLY ADDED PLV FILES - Likely Renames/Refactors")
-    IO.puts("(Matches LVN files already matched to other PLV files)")
+    IO.puts("NEWLY ADDED UPSTREAM FILES - Likely Renames/Refactors")
+    IO.puts("(Matches downstream files already matched to other upstream files)")
     IO.puts("=" |> String.duplicate(80))
     IO.puts("")
 
@@ -291,14 +298,14 @@ defmodule TrackUpstream.CLI do
           end
 
         IO.puts("NEW: #{new_plv}\t#{Float.round(sim * 100, 2)}%#{verification_text}")
-        IO.puts("  -> LVN: #{lvn}")
+        IO.puts("  -> DOWNSTREAM: #{lvn}")
         IO.puts("  -> OLD: #{old_plv}\t#{Float.round(old_sim * 100, 2)}%")
         IO.puts("")
       end
     end
 
     IO.puts("=" |> String.duplicate(80))
-    IO.puts("NEWLY ADDED PLV FILES - Tests for Translated Modules")
+    IO.puts("NEWLY ADDED UPSTREAM FILES - Tests for Translated Modules")
     IO.puts("(New test files that test modules which have been translated)")
     IO.puts("=" |> String.duplicate(80))
     IO.puts("")
@@ -314,8 +321,8 @@ defmodule TrackUpstream.CLI do
     end
 
     IO.puts("=" |> String.duplicate(80))
-    IO.puts("NEWLY ADDED PLV FILES - Potentially Need LVN Equivalent")
-    IO.puts("(Matches unclaimed LVN files - may indicate LVN already has it)")
+    IO.puts("NEWLY ADDED UPSTREAM FILES - Potentially Need Downstream Equivalent")
+    IO.puts("(Matches unclaimed downstream files - may indicate downstream already has it)")
     IO.puts("=" |> String.duplicate(80))
     IO.puts("")
 
@@ -341,7 +348,7 @@ defmodule TrackUpstream.CLI do
 
     IO.puts("")
     IO.puts("=" |> String.duplicate(80))
-    IO.puts("NEWLY ADDED PLV FILES - Need Manual Review")
+    IO.puts("NEWLY ADDED UPSTREAM FILES - Need Manual Review")
     IO.puts("(#{files_needing_porting} files with <70% similarity - likely need new implementation)")
     IO.puts("=" |> String.duplicate(80))
     IO.puts("")
@@ -359,10 +366,10 @@ defmodule TrackUpstream.CLI do
     end
 
     IO.puts("")
-    IO.puts("Newly added PLV files: #{length(newly_added_files)}")
+    IO.puts("Newly added upstream files: #{length(newly_added_files)}")
     IO.puts("  - Likely renames/refactors: #{length(new_with_claimed_annotated)}")
     IO.puts("  - Tests for translated modules: #{length(new_tests_for_translated)}")
-    IO.puts("  - Potentially need LVN equivalent: #{length(new_with_unclaimed_match)}")
+    IO.puts("  - Potentially need downstream equivalent: #{length(new_with_unclaimed_match)}")
     IO.puts("  - Need manual review (<70%): #{files_needing_porting}")
   end
 end

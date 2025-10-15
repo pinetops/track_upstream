@@ -46,32 +46,28 @@ defmodule Mix.Tasks.TrackUpstream do
 
   ## Usage
 
-      mix track_upstream <upstream_start_rev> <upstream_end_rev> <downstream_rev> [options]
+      mix track_upstream <upstream_start_rev> <upstream_end_rev> <downstream_rev> --upstream-dir <path>
 
   ## Arguments
 
-    * `upstream_start_rev` - Upstream starting revision (e.g., v1.0.18, commit hash)
-    * `upstream_end_rev` - Upstream ending revision (e.g., v1.1.14, commit hash)
-    * `downstream_rev` - Downstream revision to compare (e.g., commit hash)
-
-  ## Options
-
-    * `--upstream-dir <path>` - Path to upstream repository (overrides config)
+    * `upstream_start_rev` - Upstream starting revision (e.g., v2.0.0, commit hash, branch)
+    * `upstream_end_rev` - Upstream ending revision (e.g., main, v2.1.0, commit hash)
+    * `downstream_rev` - Downstream revision to compare (e.g., main, commit hash)
+    * `--upstream-dir <path>` - Path to upstream repository (required)
 
   ## Examples
 
-      mix track_upstream v1.0.18 v1.1.14 abc123
-      mix track_upstream v1.0.18 v1.1.14 abc123 --upstream-dir ../upstream-repo
+      mix track_upstream v2.0.0 main main --upstream-dir ../upstream-repo
+      mix track_upstream abc123 def456 main --upstream-dir /absolute/path/to/upstream
 
   ## Configuration
 
   Create a `.track_upstream_config.md` file in your downstream project directory.
   This file should contain:
   - Upstream and downstream project names and abbreviations
-  - Repository paths
   - Porting constraints specific to your project
 
-  See the LiveView Native repository for an example configuration file.
+  See https://github.com/pinetops/track_upstream for an example configuration file.
 
   ## Requirements
 
@@ -108,7 +104,14 @@ defmodule Mix.Tasks.TrackUpstream do
       end
 
     upstream_dir = opts[:upstream_dir]
-    final_opts = if upstream_dir, do: [upstream_dir: upstream_dir, analyze: true], else: [analyze: true]
+
+    unless upstream_dir do
+      IO.puts("\nError: --upstream-dir is required\n")
+      print_usage()
+      System.halt(1)
+    end
+
+    final_opts = [upstream_dir: upstream_dir, analyze: true]
 
     # Manually start dependencies needed by the tool
     Application.ensure_all_started(:telemetry)
@@ -121,19 +124,17 @@ defmodule Mix.Tasks.TrackUpstream do
 
   defp print_usage do
     IO.puts("""
-    Usage: mix track_upstream <upstream_start_rev> <upstream_end_rev> <downstream_rev> [options]
+    Usage: mix track_upstream <upstream_start_rev> <upstream_end_rev> <downstream_rev> --upstream-dir <path>
 
     Arguments:
-      upstream_start_rev   - Upstream starting revision (e.g., v1.0.18, commit hash)
-      upstream_end_rev     - Upstream ending revision (e.g., v1.1.14, commit hash)
-      downstream_rev       - Downstream revision to compare (e.g., commit hash)
-
-    Options:
-      --upstream-dir <path>  - Path to upstream repository (overrides config)
+      upstream_start_rev     - Upstream starting revision (e.g., v2.0.0, commit hash, branch)
+      upstream_end_rev       - Upstream ending revision (e.g., main, v2.1.0, commit hash)
+      downstream_rev         - Downstream revision to compare (e.g., main, commit hash)
+      --upstream-dir <path>  - Path to upstream repository (required)
 
     Examples:
-      mix track_upstream v1.0.18 v1.1.14 abc123
-      mix track_upstream v1.0.18 v1.1.14 abc123 --upstream-dir ../upstream-repo
+      mix track_upstream v2.0.0 main main --upstream-dir ../upstream-repo
+      mix track_upstream abc123 def456 main --upstream-dir /path/to/upstream
 
     Configuration:
       Create .track_upstream_config.md in your project directory.
