@@ -132,26 +132,59 @@ mix track_upstream <upstream_start_rev> <upstream_end_rev> <downstream_rev> [opt
 
 ### Arguments
 
-- `upstream_start_rev` - Upstream starting revision (e.g., v1.0.18, commit hash)
-- `upstream_end_rev` - Upstream ending revision (e.g., v1.1.14, commit hash)
-- `downstream_rev` - Downstream revision to compare (e.g., commit hash)
+- `upstream_start_rev` - Upstream starting revision (e.g., v2.0.0, commit hash, branch name)
+- `upstream_end_rev` - Upstream ending revision (e.g., main, v2.1.0, commit hash)
+- `downstream_rev` - Downstream revision to compare against (e.g., main, commit hash)
 
 ### Options
 
 - `--upstream-dir <path>` - Path to upstream repository (overrides config file)
 
-### Examples
+### Typical Workflow
 
 ```bash
-# Full analysis with porting guide generation (using config file)
-mix track_upstream v1.0.18 v1.1.14 5905fd1
+# 1. Navigate to your downstream project
+cd /path/to/your/downstream-project
 
-# Specify upstream directory explicitly
-mix track_upstream v1.0.18 v1.1.14 5905fd1 --upstream-dir ../upstream-repo
+# 2. Create a new branch for the porting work
+git checkout -b port-upstream-changes
 
-# Run from any directory if installed globally
-cd /path/to/downstream/project
-mix track_upstream v1.0.18 v1.1.14 5905fd1
+# 3. Run track_upstream to analyze changes
+# Compare upstream's v2.0.0 tag to current main, against your current main
+mix track_upstream v2.0.0 main main
+
+# This generates:
+# - UPSTREAM_PORTING_GUIDE.md (your main reference)
+# - translation_analyses/ directory (detailed file-by-file analysis)
+```
+
+### Using the Generated Guide
+
+After running the tool, you'll have an `UPSTREAM_PORTING_GUIDE.md` file. This guide is designed to work with AI coding assistants:
+
+**With Claude Code or similar tools:**
+
+1. Open the generated `UPSTREAM_PORTING_GUIDE.md` in your editor
+2. Tell your AI assistant: "Please review the UPSTREAM_PORTING_GUIDE.md and help me port these changes to our codebase"
+3. The AI will use the transformation rules and upstream deltas to guide implementation
+4. Work through each file pair systematically, applying the documented transformations
+
+The guide includes:
+- **File-global transformation rules** - How to adapt upstream patterns to your downstream code
+- **Upstream deltas** - What changed upstream that needs porting
+- **Context** - Why changes were made and how they fit together
+
+### Additional Examples
+
+```bash
+# Compare specific commit range
+mix track_upstream abc123 def456 main
+
+# Specify upstream directory explicitly (if not using config file)
+mix track_upstream v2.0.0 main main --upstream-dir ../upstream-repo
+
+# Compare against a specific downstream commit
+mix track_upstream v2.0.0 main 5905fd1
 ```
 
 ## Requirements
@@ -271,7 +304,7 @@ mix archive.install
 
 # Test the installed command
 cd /path/to/test/project
-mix track_upstream v1.0.0 v1.1.0 abc123
+mix track_upstream v2.0.0 main main
 ```
 
 ## License
