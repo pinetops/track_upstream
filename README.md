@@ -27,31 +27,41 @@ The goal is to ensure downstream projects maintain functional parity with their 
 - Git
 - An OpenAI API key
 
-### Build the escript
+### Global Installation (Recommended)
+
+Install as a Mix archive from GitHub:
 
 ```bash
-# Clone or navigate to the track_upstream directory
-cd track_upstream
-
-# Install dependencies
-mix deps.get
-
-# Build the escript
-mix escript.build
+mix archive.install github pinetops/track_upstream
 ```
 
-This will create an executable file named `track_upstream` in the current directory.
+This makes the `mix track_upstream` command available globally from any directory.
 
-### Optional: Install globally
-
-To make the tool available system-wide:
+To update to the latest version:
 
 ```bash
-# Copy to a directory in your PATH (e.g., /usr/local/bin)
-cp track_upstream /usr/local/bin/
+mix archive.install github pinetops/track_upstream --force
+```
 
-# Or install via mix escript
-mix escript.install
+To uninstall:
+
+```bash
+mix archive.uninstall track_upstream
+```
+
+### Local Installation (Within a Project)
+
+Alternatively, add to your project's dependencies in `mix.exs`:
+
+```elixir
+{:track_upstream, github: "pinetops/track_upstream"}
+```
+
+Then:
+
+```bash
+mix deps.get
+mix track_upstream <args>
 ```
 
 ## Configuration
@@ -69,34 +79,31 @@ Edit this file to configure the tool for your specific upstream/downstream relat
 ### Basic Syntax
 
 ```bash
-track_upstream <upstream_start_rev> <upstream_end_rev> <downstream_start_rev> [options]
+mix track_upstream <upstream_start_rev> <upstream_end_rev> <downstream_rev> [options]
 ```
 
 ### Arguments
 
 - `upstream_start_rev` - Upstream starting revision (e.g., v1.0.18, commit hash)
 - `upstream_end_rev` - Upstream ending revision (e.g., v1.1.14, commit hash)
-- `downstream_start_rev` - Downstream revision to compare (e.g., commit hash)
+- `downstream_rev` - Downstream revision to compare (e.g., commit hash)
 
 ### Options
 
-- `--upstream-dir <path>` - Path to upstream repository (default: current directory)
-- `--skip-analyze` - Skip detailed analysis (only show file matches, no guide generation)
+- `--upstream-dir <path>` - Path to upstream repository (overrides config file)
 
 ### Examples
 
 ```bash
 # Full analysis with porting guide generation (using config file)
-./track_upstream v1.0.18 v1.1.14 5905fd1
+mix track_upstream v1.0.18 v1.1.14 5905fd1
 
 # Specify upstream directory explicitly
-./track_upstream v1.0.18 v1.1.14 5905fd1 --upstream-dir ../upstream-repo
+mix track_upstream v1.0.18 v1.1.14 5905fd1 --upstream-dir ../upstream-repo
 
-# Quick analysis without detailed guide
-./track_upstream v1.0.18 v1.1.14 5905fd1 --skip-analyze
-
-# If installed globally
-track_upstream v1.0.18 v1.1.14 5905fd1
+# Run from any directory if installed globally
+cd /path/to/downstream/project
+mix track_upstream v1.0.18 v1.1.14 5905fd1
 ```
 
 ## Requirements
@@ -119,19 +126,13 @@ track_upstream v1.0.18 v1.1.14 5905fd1
 
 ## Output
 
-### With Analysis (default)
+The tool generates:
 
 - **Matched file pairs** (existing upstream/downstream files)
 - **Newly added upstream files** categorized by relevance
 - **Summary statistics**
 - **Individual file pair analyses** in `translation_analyses/` directory
 - **Global porting guide** in `UPSTREAM_PORTING_GUIDE.md`
-
-### With `--skip-analyze`
-
-- **Matched file pairs** (existing)
-- **Newly added upstream files** categorized by relevance
-- **Summary statistics**
 
 ## How It Works
 
@@ -170,11 +171,14 @@ rm -rf .track_changes_cache/
 ```
 track_upstream/
 ├── lib/
-│   └── track_upstream.ex    # Main source file with all modules
-├── mix.exs                  # Mix project configuration
-├── .formatter.exs           # Code formatting configuration
-├── .gitignore               # Git ignore rules
-└── README.md                # This file
+│   ├── track_upstream.ex        # Main source file with all modules
+│   └── mix/
+│       └── tasks/
+│           └── track_upstream.ex # Mix task implementation
+├── mix.exs                      # Mix project configuration
+├── .formatter.exs               # Code formatting configuration
+├── .gitignore                   # Git ignore rules
+└── README.md                    # This file
 ```
 
 ### Building from Source
@@ -186,11 +190,11 @@ mix deps.get
 # Compile
 mix compile
 
-# Build escript
-mix escript.build
+# Build Mix archive
+mix archive.build
 
-# Run directly
-./track_upstream --help
+# Install locally
+mix archive.install
 ```
 
 ### Testing
@@ -200,8 +204,12 @@ mix escript.build
 mix format
 
 # Build and test
-mix escript.build
-./track_upstream v1.0.0 v1.1.0 abc123 --skip-analyze
+mix archive.build
+mix archive.install
+
+# Test the installed command
+cd /path/to/test/project
+mix track_upstream v1.0.0 v1.1.0 abc123
 ```
 
 ## License
