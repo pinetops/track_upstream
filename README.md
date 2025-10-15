@@ -102,7 +102,7 @@ IMPORTANT CONSTRAINTS when porting from upstream to downstream:
    - More constraints...
 ```
 
-See the [LiveView Native repository](https://github.com/liveview-native/live_view_native) for a complete example configuration file.
+**Example:** Create this file in your downstream project root directory before running the tool.
 
 ## Usage
 
@@ -203,14 +203,26 @@ rm -rf .track_changes_cache/
 ```
 track_upstream/
 ├── lib/
-│   ├── track_upstream.ex        # Main source file with all modules
+│   ├── track_upstream.ex              # Main module (moduledoc only)
+│   ├── track_upstream/
+│   │   ├── analysis.ex                # Analysis orchestration
+│   │   ├── cache.ex                   # Generic caching utilities
+│   │   ├── cli.ex                     # CLI interface and orchestration
+│   │   ├── config.ex                  # Configuration management
+│   │   ├── file_matcher.ex            # File matching logic
+│   │   ├── file_pair_analyzer.ex      # File pair diff generation
+│   │   ├── git.ex                     # Git operations
+│   │   ├── guide_builder.ex           # Global translation guide builder
+│   │   └── openai/
+│   │       ├── chat.ex                # OpenAI chat completions (via LangChain)
+│   │       └── embeddings.ex          # OpenAI embeddings (direct API)
 │   └── mix/
 │       └── tasks/
-│           └── track_upstream.ex # Mix task implementation
-├── mix.exs                      # Mix project configuration
-├── .formatter.exs               # Code formatting configuration
-├── .gitignore                   # Git ignore rules
-└── README.md                    # This file
+│           └── track_upstream.ex      # Mix task implementation
+├── mix.exs                            # Mix project configuration
+├── .formatter.exs                     # Code formatting configuration
+├── .gitignore                         # Git ignore rules
+└── README.md                          # This file
 ```
 
 ### Building from Source
