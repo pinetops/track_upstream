@@ -29,17 +29,31 @@ The goal is to ensure downstream projects maintain functional parity with their 
 
 ### Global Installation (Recommended)
 
-Install as a Mix archive from GitHub:
+**Option 1: Install from Hex.pm**
+
+```bash
+mix archive.install hex track_upstream
+```
+
+This installs the latest published version from Hex.pm and makes the `mix track_upstream` command available globally.
+
+**Option 2: Install from GitHub**
 
 ```bash
 mix archive.install github pinetops/track_upstream
 ```
 
-This makes the `mix track_upstream` command available globally from any directory.
+This installs directly from the GitHub repository (useful for development versions).
+
+### Managing the Installation
 
 To update to the latest version:
 
 ```bash
+# From Hex.pm
+mix archive.install hex track_upstream
+
+# From GitHub
 mix archive.install github pinetops/track_upstream --force
 ```
 
@@ -54,6 +68,10 @@ mix archive.uninstall track_upstream
 Alternatively, add to your project's dependencies in `mix.exs`:
 
 ```elixir
+# From Hex.pm (recommended)
+{:track_upstream, "~> 0.1.0"}
+
+# Or from GitHub
 {:track_upstream, github: "pinetops/track_upstream"}
 ```
 
@@ -258,7 +276,7 @@ mix track_upstream v1.0.0 v1.1.0 abc123
 
 ## License
 
-Copyright (c) 2025 bucko
+Copyright (c) 2025 Thomas Clarke <tom@u2i.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
