@@ -18,9 +18,8 @@ defmodule TrackUpstream.MixProject do
 
   defp deps do
     [
-      {:req, "~> 0.4.0"},
-      {:jason, "~> 1.4"},
-      {:finch, "~> 0.16"}
+      {:langchain, "~> 0.3.0"},
+      {:jason, "~> 1.4"}
     ]
   end
 end

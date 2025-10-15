@@ -1,6 +1,9 @@
 defmodule TrackUpstream.OpenAI.Embeddings do
   @moduledoc """
   OpenAI embedding operations for semantic similarity.
+
+  Note: Uses direct Req calls for embeddings since LangChain Elixir doesn't
+  currently provide embeddings support. Chat completions use LangChain.
   """
 
   alias TrackUpstream.{Cache, Config}
@@ -51,6 +54,7 @@ defmodule TrackUpstream.OpenAI.Embeddings do
         content
       end
 
+    # Direct API call using Req (LangChain doesn't support embeddings yet)
     response =
       Req.post!(
         "https://api.openai.com/v1/embeddings",

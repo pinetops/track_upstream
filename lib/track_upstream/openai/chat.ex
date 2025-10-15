@@ -3,6 +3,8 @@ defmodule TrackUpstream.OpenAI.Chat do
   OpenAI chat operations for LLM-based verification and analysis.
   """
 
+  alias LangChain.ChatModels.ChatOpenAI
+  alias LangChain.Message
   alias TrackUpstream.{Cache, Config}
 
   @doc """
@@ -76,25 +78,9 @@ defmodule TrackUpstream.OpenAI.Chat do
     Keep the description concise and factual. Format as markdown.
     """
 
-    response =
-      Req.post!(
-        "https://api.openai.com/v1/chat/completions",
-        json: %{
-          model: config.chat_model,
-          messages: [%{role: "user", content: prompt}],
-          temperature: 0
-        },
-        headers: [{"Authorization", "Bearer #{api_key}"}],
-        retry: :transient,
-        receive_timeout: 60_000
-      )
-
-    case response.status do
-      200 ->
-        response.body["choices"] |> List.first() |> Map.get("message") |> Map.get("content")
-
-      _ ->
-        "_Could not generate description (API error)_"
+    case call_llm(config.chat_model, prompt, api_key) do
+      {:ok, response} -> response
+      {:error, _} -> "_Could not generate description (API error)_"
     end
   end
 
@@ -168,28 +154,11 @@ defmodule TrackUpstream.OpenAI.Chat do
     - Key observations: [factual observations about applying transformation rules to the upstream changes]
     """
 
-    response =
-      Req.post!(
-        "https://api.openai.com/v1/chat/completions",
-        json: %{
-          model: config.analysis_model,
-          messages: [
-            %{role: "system", content: agent_instructions},
-            %{role: "user", content: prompt}
-          ],
-          temperature: 0
-        },
-        headers: [{"Authorization", "Bearer #{api_key}"}],
-        retry: :transient,
-        receive_timeout: config.timeout
-      )
-
-    case response.status do
-      200 ->
-        response.body["choices"] |> List.first() |> Map.get("message") |> Map.get("content")
-
-      _ ->
-        "Error: OpenAI API call failed - #{inspect(response)}"
+    case call_llm_with_system(config.analysis_model, agent_instructions, prompt, api_key,
+           timeout: config.timeout
+         ) do
+      {:ok, response} -> response
+      {:error, reason} -> "Error: OpenAI API call failed - #{inspect(reason)}"
     end
   end
 
@@ -279,28 +248,9 @@ defmodule TrackUpstream.OpenAI.Chat do
       }
       """
 
-      response =
-        Req.post!(
-          "https://api.openai.com/v1/chat/completions",
-          json: %{
-            model: config.chat_model,
-            messages: [%{role: "user", content: prompt}],
-            response_format: %{type: "json_object"},
-            temperature: 0
-          },
-          headers: [{"Authorization", "Bearer #{api_key}"}],
-          retry: :transient
-        )
-
-      case response.status do
-        200 ->
-          content =
-            response.body["choices"] |> List.first() |> Map.get("message") |> Map.get("content")
-
-          Jason.decode!(content)
-
-        _ ->
-          %{"is_translation" => false, "confidence" => "low", "reason" => "API error"}
+      case call_llm_json(config.chat_model, prompt, api_key) do
+        {:ok, json} -> json
+        {:error, _} -> %{"is_translation" => false, "confidence" => "low", "reason" => "API error"}
       end
     end
   end
@@ -347,26 +297,8 @@ defmodule TrackUpstream.OpenAI.Chat do
           """
       end
 
-    response =
-      Req.post!(
-        "https://api.openai.com/v1/chat/completions",
-        json: %{
-          model: config.chat_model,
-          messages: [%{role: "user", content: prompt}],
-          response_format: %{type: "json_object"},
-          temperature: 0
-        },
-        headers: [{"Authorization", "Bearer #{api_key}"}],
-        retry: :transient
-      )
-
-    case response.status do
-      200 ->
-        content =
-          response.body["choices"] |> List.first() |> Map.get("message") |> Map.get("content")
-
-        decoded = Jason.decode!(content)
-
+    case call_llm_json(config.chat_model, prompt, api_key) do
+      {:ok, decoded} ->
         # Handle both {"modules": [...]} and direct array
         case decoded do
           %{"modules" => modules} when is_list(modules) -> modules
@@ -374,8 +306,68 @@ defmodule TrackUpstream.OpenAI.Chat do
           _ -> []
         end
 
-      _ ->
+      {:error, _} ->
         []
+    end
+  end
+
+  # Helper functions for LangChain API calls
+
+  defp call_llm(model, prompt, api_key, opts \\ []) do
+    {:ok, chat} =
+      ChatOpenAI.new(%{
+        model: model,
+        temperature: 0,
+        api_key: api_key
+      })
+
+    message = Message.new_user!(prompt)
+
+    case ChatOpenAI.call(chat, [message], opts) do
+      {:ok, [%Message{role: :assistant, content: content} | _]} -> {:ok, content}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp call_llm_with_system(model, system_prompt, user_prompt, api_key, opts \\ []) do
+    {:ok, chat} =
+      ChatOpenAI.new(%{
+        model: model,
+        temperature: 0,
+        api_key: api_key
+      })
+
+    messages = [
+      Message.new_system!(system_prompt),
+      Message.new_user!(user_prompt)
+    ]
+
+    case ChatOpenAI.call(chat, messages, opts) do
+      {:ok, [%Message{role: :assistant, content: content} | _]} -> {:ok, content}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp call_llm_json(model, prompt, api_key) do
+    {:ok, chat} =
+      ChatOpenAI.new(%{
+        model: model,
+        temperature: 0,
+        response_format: %{type: "json_object"},
+        api_key: api_key
+      })
+
+    message = Message.new_user!(prompt)
+
+    case ChatOpenAI.call(chat, [message]) do
+      {:ok, [%Message{role: :assistant, content: content} | _]} ->
+        case Jason.decode(content) do
+          {:ok, json} -> {:ok, json}
+          error -> error
+        end
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 end
