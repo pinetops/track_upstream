@@ -165,9 +165,9 @@ After running the tool, you'll have an `UPSTREAM_PORTING_GUIDE.md` file. This gu
 **With Claude Code or similar tools:**
 
 1. Open the generated `UPSTREAM_PORTING_GUIDE.md` in your editor
-2. Tell your AI assistant: "Please review the UPSTREAM_PORTING_GUIDE.md and help me port these changes to our codebase"
+2. Tell your AI assistant: "Read the UPSTREAM_PORTING_GUIDE.md file and port all the upstream changes to our codebase. Work through each file pair systematically, applying the documented transformation rules to the upstream deltas. Complete the entire porting process."
 3. The AI will use the transformation rules and upstream deltas to guide implementation
-4. Work through each file pair systematically, applying the documented transformations
+4. Review and test the changes as the AI completes each file
 
 The guide includes:
 - **File-global transformation rules** - How to adapt upstream patterns to your downstream code
