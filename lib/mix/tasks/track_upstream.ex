@@ -65,11 +65,13 @@ defmodule Mix.Tasks.TrackUpstream do
 
   ## Configuration
 
-  On first run, creates `.track_upstream_config.md` in your downstream project directory.
-  Edit this file to configure:
+  Create a `.track_upstream_config.md` file in your downstream project directory.
+  This file should contain:
   - Upstream and downstream project names and abbreviations
   - Repository paths
   - Porting constraints specific to your project
+
+  See the LiveView Native repository for an example configuration file.
 
   ## Requirements
 
@@ -134,8 +136,8 @@ defmodule Mix.Tasks.TrackUpstream do
       mix track_upstream v1.0.18 v1.1.14 abc123 --upstream-dir ../upstream-repo
 
     Configuration:
-      On first run, creates .track_upstream_config.md in current directory.
-      Edit this file to configure project-specific settings.
+      Create .track_upstream_config.md in your project directory.
+      See https://github.com/pinetops/track_upstream for configuration format.
 
     For more information, run: mix help track_upstream
     """)

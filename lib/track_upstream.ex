@@ -15,6 +15,7 @@ defmodule TrackUpstream do
     Configuration and constants for upstream change tracking.
 
     Configuration is loaded from .track_upstream_config.md in the downstream project directory.
+    If the file doesn't exist, default instructions are provided explaining the required format.
     """
 
     @cache_dirs %{
@@ -82,12 +83,41 @@ defmodule TrackUpstream do
 
     defp default_porting_constraints do
       """
-      IMPORTANT: Configure project-specific porting constraints in .track_upstream_config.md
+      IMPORTANT: No .track_upstream_config.md file found in current directory.
 
-      This should describe:
-      1. Any technology-specific adaptations (e.g., HTML vs native platforms)
-      2. Features that should NOT be ported (e.g., web-specific functionality)
-      3. Naming conventions and transformations (e.g., module namespacing)
+      Please create a .track_upstream_config.md file with the following format:
+
+      # Track Upstream Configuration
+
+      ## Upstream Project
+
+      **Name:** [Upstream Project Name]
+      **Abbreviation:** [ABBREV]
+
+      ## Downstream Project
+
+      **Name:** [Your Project Name]
+      **Abbreviation:** [ABBREV]
+      **Repository Path:** .
+
+      ## Porting Constraints
+
+      IMPORTANT CONSTRAINTS when porting from upstream to downstream:
+
+      1. **Technology-Specific Adaptations:**
+         - Describe any platform differences (e.g., HTML vs native platforms)
+         - Explain how upstream concepts map to downstream
+
+      2. **Features that should NOT be ported:**
+         - List upstream features that don't apply to downstream
+         - Explain why (e.g., web-specific, platform-specific, etc.)
+
+      3. **Naming Conventions:**
+         - Module namespace transformations (e.g., Upstream.Module → Downstream.Module)
+         - File path conventions
+         - Other systematic naming changes
+
+      See https://github.com/liveview-native/live_view_native for a complete example.
       """
     end
   end

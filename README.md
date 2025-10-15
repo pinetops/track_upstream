@@ -66,13 +66,43 @@ mix track_upstream <args>
 
 ## Configuration
 
-On first run, the tool will generate a `.track_upstream_config.md` file in your downstream project directory. This file contains:
+Create a `.track_upstream_config.md` file in your downstream project directory. This file should contain:
 
 - Upstream and downstream project names and abbreviations
 - Repository paths
 - Porting constraints specific to your project
 
-Edit this file to configure the tool for your specific upstream/downstream relationship.
+### Configuration File Format
+
+The configuration file uses markdown format with specific sections:
+
+```markdown
+# Track Upstream Configuration
+
+## Upstream Project
+
+**Name:** [Upstream Project Name]
+**Abbreviation:** [abbrev]
+
+## Downstream Project
+
+**Name:** [Your Project Name]
+**Abbreviation:** [abbrev]
+**Repository Path:** .
+
+## Porting Constraints
+
+IMPORTANT CONSTRAINTS when porting from upstream to downstream:
+
+1. **[Constraint Category]:**
+   - Description of constraint
+   - Specific rules or considerations
+
+2. **[Another Category]:**
+   - More constraints...
+```
+
+See the [LiveView Native repository](https://github.com/liveview-native/live_view_native) for a complete example configuration file.
 
 ## Usage
 
@@ -116,10 +146,12 @@ mix track_upstream v1.0.18 v1.1.14 5905fd1
    ```
 
 2. **Configuration file:**
-   On first run, a `.track_upstream_config.md` file will be created in your downstream repository. Edit this file to specify:
+   You must create a `.track_upstream_config.md` file in your downstream repository. This file specifies:
    - Upstream project name and abbreviation
    - Downstream project name and abbreviation
    - Porting constraints specific to your project relationship
+
+   See the Configuration section above for the file format.
 
 3. **Run from downstream repository:**
    The tool should be run from within the downstream repository directory where you want to apply the changes.
