@@ -134,8 +134,9 @@ defmodule TrackUpstream.GuideBuilder do
             * Run tests related to this step
             * Verify no NEW test failures are introduced
             * Verify tests, warnings and compilation errors related to this step now pass (or improve)
+            * **COMMIT THE CHANGES** using git with a descriptive commit message
             * Report completion with test results _or_ report that there is a better step to start with
-            * Commit or restore as appropriate
+            * If there were failures, restore changes and report what went wrong
          d. Wait for the subagent to complete and verify success
          e. Only then proceed to the next step
        - Each step builds on previous steps, so order matters
@@ -189,6 +190,7 @@ defmodule TrackUpstream.GuideBuilder do
     - Ensure no NEW test failures are introduced
     - Verify tests related to this step pass or improve
     - Clear all warnings
+    - **COMMIT your changes** with a descriptive commit message before reporting completion
     - Do NOT make changes for other file pairs
 
     Available Resources:
@@ -207,6 +209,12 @@ defmodule TrackUpstream.GuideBuilder do
     - Any exclusions/non-applicable changes with justification
     - Test results: which tests now pass, any remaining failures
     - Confirmation that no new test failures were introduced
+    - **Confirmation that changes were committed** with the commit message
+
+    If the step FAILED (tests broke, couldn't complete), restore changes and report:
+    - What went wrong
+    - Whether a different step should be attempted first
+    - Confirmation that changes were restored (git restore)
     ```
 
     ---
