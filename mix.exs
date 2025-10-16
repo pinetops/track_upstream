@@ -16,7 +16,8 @@ defmodule TrackUpstream.MixProject do
 
   def application do
     [
-      extra_applications: [:logger, :crypto]
+      extra_applications: [:logger, :crypto, :ssl, :inets],
+      mod: {TrackUpstream.Application, []}
     ]
   end
 
