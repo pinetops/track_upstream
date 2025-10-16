@@ -100,27 +100,66 @@ defmodule TrackUpstream.GuideBuilder do
 
     4. **Review newly added files** - Check the Addendum for descriptions of new files
 
-    5. **Create implementation plan by organizing work FUNCTIONALLY, not file-by-file**:
+    5. **Identify discrete upstream improvements and create functional tasks**:
 
-       Review all #{length(analyses)} file-specific sections below and group upstream changes into
-       FUNCTIONAL TASKS where each task represents a cohesive feature, bug fix, or improvement that
-       may span multiple files.
+       ⚠️ **DO NOT create a plan like "Step 1: file A, Step 2: file B, Step 3: file C"**
 
-       **How to organize functionally:**
-       - Look for related changes across files (e.g., "async result" changes in multiple files → one task)
-       - Group by feature domain (e.g., all upload-related changes together)
-       - Consider test impact (group changes that fix the same test failure)
-       - Identify dependencies (some tasks may need to be done before others)
+       **Step 5.1: Understand what upstream actually changed**
 
-       **Bad approach:** "Step 1: Update file A, Step 2: Update file B"
-       **Good approach:** "Task 1: Add async result handling (files A, B, C), Task 2: Fix upload validation (files D, E)"
+       Read through all #{length(analyses)} UPSTREAM DELTA sections and identify the discrete
+       improvements/features/fixes that upstream made. Each upstream change should be identifiable
+       as a coherent concept (e.g., "added async result handling", "fixed upload validation",
+       "improved slot annotations").
 
-       For each task in your plan:
-       - Give it a descriptive name (e.g., "Add async result handling")
-       - List all files affected by this task
-       - Note what upstream deltas are being ported (reference section numbers)
-       - Identify dependencies on other tasks
-       - Order tasks by impact on test failures (highest impact first)
+       Look for patterns:
+       - Features mentioned in multiple files (e.g., "async_result", "annotate_slot", "upload")
+       - Related bug fixes (e.g., multiple files fixing the same issue)
+       - New capabilities (e.g., new functions, new behavior)
+       - Performance improvements
+       - API changes
+
+       Make a list like:
+       ```
+       Upstream Changes Identified:
+       - Added slot annotation callback system (affects html_engine, js)
+       - Fixed upload client timeout handling (affects upload_client, client_proxy)
+       - Added stream_async functionality (affects multiple files)
+       - Improved diff rendering for debugging (affects live_view_test)
+       ```
+
+       **Step 5.2: Group file changes by discrete upstream improvement**
+
+       Now group the file sections by which upstream improvement they belong to:
+
+       ❌ **WRONG - file-by-file:**
+       ```
+       Step 1/12: Port html_engine.ex → template/engine.ex
+       Step 2/12: Port live_view_test.ex → live_view_native_test.ex
+       ```
+
+       ✅ **CORRECT - by upstream improvement:**
+       ```
+       Task 1: Port slot annotation callback system
+         - Section 1: html_engine.ex → template/engine.ex (define callback)
+         - Section 3: js.ex → lvn.ex (use callback)
+         Why together: These implement the same upstream feature
+
+       Task 2: Port upload timeout improvements
+         - Section 4: upload_client.ex (add timeout handling)
+         - Section 5: client_proxy.ex (propagate timeouts)
+         - Section 6: upload tests (test timeout behavior)
+         Why together: These all relate to the same upstream fix
+
+       Task 3: Port stream_async functionality
+         - Section 7, 8, 9: (multiple files implementing stream_async)
+         Why together: This is a single coherent upstream feature
+       ```
+
+       Your plan MUST:
+       - Be organized by WHAT upstream changed conceptually, not by file
+       - Have task names describing the upstream improvement/feature
+       - Have significantly fewer tasks than files (typically 3-8 tasks for #{length(analyses)} files)
+       - Group related file changes together as one task
 
        For each upstream delta in each task, you must either:
        - **Port it** - Apply the transformation rules to port the change to LVN
