@@ -59,19 +59,7 @@ defmodule TrackUpstream.GuideBuilder do
 
     ---
 
-    ## Functional Tasks for Porting
-
-    The upstream changes have been organized into logical functional tasks. Each task may span multiple files.
-    Work through these tasks sequentially - each task represents a cohesive feature, bug fix, or improvement.
-
-    #{extract_functional_tasks(analyses)}
-
-    ---
-
-    ## File-Specific Reference
-
-    The sections below provide detailed file-by-file analysis for reference.
-    Use these when implementing the functional tasks above.
+    ## File-Specific Porting Details
 
     Each section below shows:
     - **Baseline transformation rules** for that file (PLV #{plv_start_rev} → LVN #{lvn_start_rev})
@@ -112,15 +100,27 @@ defmodule TrackUpstream.GuideBuilder do
 
     4. **Review newly added files** - Check the Addendum for descriptions of new files
 
-    5. **Create implementation plan** - Review the "Functional Tasks for Porting" section above.
-       The LLM has already organized all upstream changes into logical tasks. For each task:
-       - Review its purpose and files affected
-       - Check dependencies - ensure prerequisite tasks are complete
-       - Review the relevant file-specific sections for detailed transformation rules
-       - Adjust task order based on current test failures (highest impact first)
+    5. **Create implementation plan by organizing work FUNCTIONALLY, not file-by-file**:
 
-       Your plan should follow the functional tasks, not individual files. Each task may span
-       multiple files and represents a cohesive feature or fix.
+       Review all #{length(analyses)} file-specific sections below and group upstream changes into
+       FUNCTIONAL TASKS where each task represents a cohesive feature, bug fix, or improvement that
+       may span multiple files.
+
+       **How to organize functionally:**
+       - Look for related changes across files (e.g., "async result" changes in multiple files → one task)
+       - Group by feature domain (e.g., all upload-related changes together)
+       - Consider test impact (group changes that fix the same test failure)
+       - Identify dependencies (some tasks may need to be done before others)
+
+       **Bad approach:** "Step 1: Update file A, Step 2: Update file B"
+       **Good approach:** "Task 1: Add async result handling (files A, B, C), Task 2: Fix upload validation (files D, E)"
+
+       For each task in your plan:
+       - Give it a descriptive name (e.g., "Add async result handling")
+       - List all files affected by this task
+       - Note what upstream deltas are being ported (reference section numbers)
+       - Identify dependencies on other tasks
+       - Order tasks by impact on test failures (highest impact first)
 
        For each upstream delta in each task, you must either:
        - **Port it** - Apply the transformation rules to port the change to LVN
@@ -178,19 +178,19 @@ defmodule TrackUpstream.GuideBuilder do
 
     **Example Subagent Prompt:**
     ```
-    Task: Complete functional task X: [TASK NAME] of the LiveView Native upgrade
+    Task: Complete task X: [DESCRIPTIVE TASK NAME] of the LiveView Native upgrade
 
-    Context: Read UPSTREAM_PORTING_GUIDE.md "Functional Tasks for Porting" section, task X.
+    Context: This task implements [feature/fix] and spans these files:
+    - Section Y: [file pair 1]
+    - Section Z: [file pair 2]
+    ...
+
+    Read UPSTREAM_PORTING_GUIDE.md sections Y, Z, ... for detailed transformation rules and upstream deltas.
 
     Current State: The Phoenix LiveView dependency has been updated, causing test failures.
     Run `mix test` first to see which tests are currently failing.
 
-    This task affects these files: [list from guide]
-    - File pair 1: upstream → downstream
-    - File pair 2: upstream → downstream
-    ...
-
-    For each file, review the corresponding "File-Specific Reference" section for:
+    For each file in this task, review its section in the guide for:
     - FILE-GLOBAL TRANSFORMATION RULES
     - UPSTREAM DELTA details
 
@@ -265,84 +265,6 @@ defmodule TrackUpstream.GuideBuilder do
       """
     end)
     |> Enum.join("\n")
-  end
-
-  defp extract_functional_tasks(analyses) do
-    # Use LLM to group upstream deltas into functional tasks
-    api_key = System.get_env("OPENAI_API_KEY")
-    unless api_key, do: raise "OPENAI_API_KEY not set"
-
-    config = Config.openai_config()
-
-    # Collect all upstream deltas from analyses
-    all_deltas =
-      analyses
-      |> Enum.map(fn {plv_file, lvn_file, _sim, analysis} ->
-        """
-        File Pair: #{plv_file} → #{lvn_file}
-        #{analysis}
-        ---
-        """
-      end)
-      |> Enum.join("\n")
-
-    prompt = """
-    TASK: Organize upstream changes into functional tasks for porting.
-
-    You have #{length(analyses)} file pairs with upstream changes. Your job is to group these changes
-    into LOGICAL FUNCTIONAL TASKS where each task represents a cohesive feature, bug fix, or improvement
-    that may span multiple files.
-
-    #{Config.porting_constraints()}
-
-    All file pair analyses with upstream deltas:
-    #{String.slice(all_deltas, 0, 80000)}
-
-    Your task: Analyze all the "UPSTREAM DELTA" sections across all files and group them into
-    functional tasks. Each task should:
-    1. Have a clear purpose (e.g., "Add async result handling", "Fix upload validation", "Improve test utilities")
-    2. Include all related changes across multiple files if they're part of the same feature
-    3. Be ordered by logical dependencies (prerequisites first)
-    4. Be testable as a unit
-
-    For each functional task, provide:
-    - **Task Name**: Brief, descriptive name
-    - **Purpose**: What this task accomplishes (1-2 sentences)
-    - **Files Affected**: List of file pairs that need changes for this task
-    - **Implementation Steps**: High-level steps to complete this task
-    - **Test Strategy**: How to verify this task is complete
-    - **Dependencies**: Which other tasks (if any) should be done first
-
-    Format as markdown with clear task sections numbered sequentially.
-
-    IMPORTANT: Some upstream changes may not be applicable to LiveView Native (per the constraints above).
-    Group those into a final task called "Review Non-Applicable Changes" with justifications.
-    """
-
-    response =
-      Req.post!(
-        "https://api.openai.com/v1/chat/completions",
-        json: %{
-          model: config.analysis_model,
-          messages: [%{role: "user", content: prompt}],
-          temperature: 0
-        },
-        headers: [{"Authorization", "Bearer #{api_key}"}],
-        retry: :transient,
-        receive_timeout: config.timeout * 2  # Allow more time for this complex analysis
-      )
-
-    case response.status do
-      200 ->
-        response.body["choices"] |> List.first() |> Map.get("message") |> Map.get("content")
-
-      _ ->
-        """
-        _Error organizing changes into functional tasks._
-
-        Fall back to file-by-file approach - see File-Specific Reference sections below.
-        """
-    end
   end
 
   defp extract_global_rules(analyses) do
