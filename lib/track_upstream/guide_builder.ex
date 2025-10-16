@@ -131,12 +131,12 @@ defmodule TrackUpstream.GuideBuilder do
             * Apply the transformation rules to the specific changes
             * For EACH upstream delta: either port it OR document why it's not applicable
             * Make the code changes
-            * Run tests related to this step
-            * Verify no NEW test failures are introduced
-            * Verify tests, warnings and compilation errors related to this step now pass (or improve)
+            * Run tests - if they fail, FIX THEM (test failures are expected during porting)
+            * Fix any compilation errors or warnings
+            * Verify no NEW test failures unrelated to this step
             * **COMMIT THE CHANGES** using git with a descriptive commit message
-            * Report completion with test results _or_ report that there is a better step to start with
-            * If there were failures, restore changes and report what went wrong
+            * Report completion with test results
+            * If the APPROACH is wrong (wrong order, need different prereqs, etc), report that issue
          d. Wait for the subagent to complete and verify success
          e. Only then proceed to the next step
        - Each step builds on previous steps, so order matters
@@ -186,12 +186,14 @@ defmodule TrackUpstream.GuideBuilder do
     - Address ALL upstream deltas for this file pair
     - Use transformation rules from the guide
     - Follow the CONSTRAINTS in the guide (see top of UPSTREAM_PORTING_GUIDE.md)
-    - Run tests related to this step
-    - Ensure no NEW test failures are introduced
-    - Verify tests related to this step pass or improve
-    - Clear all warnings
+    - Run tests and FIX any failures (test failures during porting are expected - fix them!)
+    - Ensure no NEW test failures unrelated to this step
+    - Clear all compilation errors and warnings
     - **COMMIT your changes** with a descriptive commit message before reporting completion
     - Do NOT make changes for other file pairs
+
+    IMPORTANT: Test failures are EXPECTED during porting. Your job is to FIX them, not abort.
+    Only stop if the APPROACH is wrong (wrong order, missing prereqs, need to rethink strategy).
 
     Available Resources:
     - Porting guide: UPSTREAM_PORTING_GUIDE.md (in current directory)
@@ -207,14 +209,15 @@ defmodule TrackUpstream.GuideBuilder do
     Report when complete with:
     - Summary of what was ported for each delta
     - Any exclusions/non-applicable changes with justification
-    - Test results: which tests now pass, any remaining failures
-    - Confirmation that no new test failures were introduced
+    - Test results: which tests were fixed, any remaining test failures
+    - Confirmation that no new unrelated test failures were introduced
     - **Confirmation that changes were committed** with the commit message
 
-    If the step FAILED (tests broke, couldn't complete), restore changes and report:
-    - What went wrong
-    - Whether a different step should be attempted first
-    - Confirmation that changes were restored (git restore)
+    If the APPROACH is wrong (not just test failures), report:
+    - Why this step should not be done now
+    - What prerequisite work is needed first
+    - Which step should be attempted instead
+    - No need to restore changes unless explicitly asked
     ```
 
     ---
