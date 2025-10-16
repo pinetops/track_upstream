@@ -330,19 +330,27 @@ defmodule TrackUpstream.OpenAI.Chat do
   end
 
   defp call_llm_with_system(model, system_prompt, user_prompt, api_key, opts) do
-    {:ok, chat} =
-      ChatOpenAI.new(%{
-        model: model,
-        temperature: 0,
-        api_key: api_key
-      })
+    # Extract timeout from opts if present
+    timeout = Keyword.get(opts, :timeout)
+
+    chat_config = %{
+      model: model,
+      temperature: 0,
+      api_key: api_key
+    }
+
+    # Add timeout to chat config if provided
+    chat_config = if timeout, do: Map.put(chat_config, :timeout, timeout), else: chat_config
+
+    {:ok, chat} = ChatOpenAI.new(chat_config)
 
     messages = [
       Message.new_system!(system_prompt),
       Message.new_user!(user_prompt)
     ]
 
-    case ChatOpenAI.call(chat, messages, opts) do
+    # Don't pass opts to call - LangChain doesn't handle them as request options
+    case ChatOpenAI.call(chat, messages) do
       {:ok, [%Message{role: :assistant, content: content} | _]} -> {:ok, content}
       {:error, reason} -> {:error, reason}
     end
