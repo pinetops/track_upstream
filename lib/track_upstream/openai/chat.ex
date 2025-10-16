@@ -329,7 +329,7 @@ defmodule TrackUpstream.OpenAI.Chat do
     end
   end
 
-  defp call_llm_with_system(model, system_prompt, user_prompt, api_key, opts \\ []) do
+  defp call_llm_with_system(model, system_prompt, user_prompt, api_key, opts) do
     {:ok, chat} =
       ChatOpenAI.new(%{
         model: model,
