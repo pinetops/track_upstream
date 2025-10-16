@@ -100,66 +100,91 @@ defmodule TrackUpstream.GuideBuilder do
 
     4. **Review newly added files** - Check the Addendum for descriptions of new files
 
-    5. **Identify discrete upstream improvements and create functional tasks**:
+    5. **Identify what upstream changed conceptually, then map to files**:
 
-       ⚠️ **DO NOT create a plan like "Step 1: file A, Step 2: file B, Step 3: file C"**
+       ⚠️ **CRITICAL: DO NOT START BY LOOKING AT FILES**
+       ⚠️ **You must understand CONCEPTS first, then map concepts to files**
 
-       **Step 5.1: Understand what upstream actually changed**
+       **Step 5.1: Read and understand the PURPOSE of upstream changes**
 
-       Read through all #{length(analyses)} UPSTREAM DELTA sections and identify the discrete
-       improvements/features/fixes that upstream made. Each upstream change should be identifiable
-       as a coherent concept (e.g., "added async result handling", "fixed upload validation",
-       "improved slot annotations").
+       Go through each file's UPSTREAM DELTA section and ask: "WHY did upstream make this change?
+       What problem were they solving? What feature were they adding?"
 
-       Look for patterns:
-       - Features mentioned in multiple files (e.g., "async_result", "annotate_slot", "upload")
-       - Related bug fixes (e.g., multiple files fixing the same issue)
-       - New capabilities (e.g., new functions, new behavior)
-       - Performance improvements
-       - API changes
+       DO NOT write "File X has changes to function Y"
+       INSTEAD write "Upstream added [FEATURE/FIX] because [REASON]"
 
-       Make a list like:
+       Example - reading section 1 (html_engine.ex):
+       - ❌ WRONG: "File has new annotate_slot callback"
+       - ✅ RIGHT: "Upstream added slot annotation system to enable better debugging/tooling"
+
+       Read ALL sections and for each one write down:
+       - What conceptual change this represents
+       - Why upstream made this change
+       - What problem it solves or capability it adds
+
+       **Step 5.2: Group conceptual changes that are related**
+
+       Now look at your list of conceptual changes and group related ones:
+
+       Example:
        ```
-       Upstream Changes Identified:
-       - Added slot annotation callback system (affects html_engine, js)
-       - Fixed upload client timeout handling (affects upload_client, client_proxy)
-       - Added stream_async functionality (affects multiple files)
-       - Improved diff rendering for debugging (affects live_view_test)
+       Conceptual Change #1: "Slot annotation debugging system"
+       - Enables tools to understand slot usage
+       - Requires: callback definition + usage in rendering
+       Files affected: html_engine (defines), js (uses)
+
+       Conceptual Change #2: "Upload timeout handling"
+       - Fixes issue where uploads could hang indefinitely
+       - Requires: timeout tracking + propagation + tests
+       Files affected: upload_client, client_proxy, tests
+
+       Conceptual Change #3: "TreeDOM diff rendering"
+       - Improves test failure messages for native markup
+       - Requires: diff algorithm + test helper updates
+       Files affected: view_tree, live_view_test
        ```
 
-       **Step 5.2: Group file changes by discrete upstream improvement**
+       **Step 5.3: Create tasks from conceptual changes**
 
-       Now group the file sections by which upstream improvement they belong to:
-
-       ❌ **WRONG - file-by-file:**
+       ❌ **WRONG - starting from files:**
        ```
-       Step 1/12: Port html_engine.ex → template/engine.ex
-       Step 2/12: Port live_view_test.ex → live_view_native_test.ex
+       Step 1: Port file 9 (critical - has compilation error)
+       Step 2: Port files 11, 10, 5 (test infrastructure)
+       Step 3: Port files 1, 7, 8 (test files)
        ```
+       This is file-driven thinking and fragments upstream work.
 
-       ✅ **CORRECT - by upstream improvement:**
+       ✅ **CORRECT - starting from concepts:**
        ```
-       Task 1: Port slot annotation callback system
-         - Section 1: html_engine.ex → template/engine.ex (define callback)
-         - Section 3: js.ex → lvn.ex (use callback)
-         Why together: These implement the same upstream feature
+       Task 1: Implement slot annotation debugging system
+         Purpose: Enable tooling to understand slot usage in templates
+         Why upstream made this: Better developer experience, debugging
+         Files needed:
+         - Section 9: html_engine (define callback)
+         - Section 3: js (use in rendering)
+         Expected outcome: Compilation warning fixed, slots can be annotated
 
-       Task 2: Port upload timeout improvements
-         - Section 4: upload_client.ex (add timeout handling)
-         - Section 5: client_proxy.ex (propagate timeouts)
-         - Section 6: upload tests (test timeout behavior)
-         Why together: These all relate to the same upstream fix
+       Task 2: Improve native markup diff rendering
+         Purpose: Better test failure messages for TreeDOM
+         Why upstream made this: Easier debugging of test failures
+         Files needed:
+         - Section 11: view_tree (diff algorithm)
+         - Section 10: live_view_test (integrate diffing)
+         Expected outcome: Test failures show clear diffs
 
-       Task 3: Port stream_async functionality
-         - Section 7, 8, 9: (multiple files implementing stream_async)
-         Why together: This is a single coherent upstream feature
+       Task 3: Fix upload timeout handling
+         Purpose: Prevent uploads from hanging indefinitely
+         Why upstream made this: Production reliability
+         Files needed:
+         - Sections X, Y, Z (upload-related files)
+         Expected outcome: Upload tests pass with timeout behavior
        ```
 
        Your plan MUST:
-       - Be organized by WHAT upstream changed conceptually, not by file
-       - Have task names describing the upstream improvement/feature
-       - Have significantly fewer tasks than files (typically 3-8 tasks for #{length(analyses)} files)
-       - Group related file changes together as one task
+       - Start by listing conceptual changes (WHAT and WHY)
+       - Then map concepts to files (not files to concepts)
+       - Have task names that describe PURPOSE, not files
+       - Show you understand WHY upstream made each change
 
        For each upstream delta in each task, you must either:
        - **Port it** - Apply the transformation rules to port the change to LVN
