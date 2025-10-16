@@ -29,57 +29,49 @@ The goal is to ensure downstream projects maintain functional parity with their 
 
 ### Global Installation (Recommended)
 
-**Option 1: Install from Hex.pm**
+Install as an escript to get a standalone executable:
 
 ```bash
-mix archive.install hex track_upstream
+# Install from GitHub
+mix escript.install github pinetops/track_upstream
+
+# Or build and install locally
+git clone https://github.com/pinetops/track_upstream.git
+cd track_upstream
+mix do deps.get, escript.build, escript.install
 ```
 
-This installs the latest published version from Hex.pm and makes the `mix track_upstream` command available globally.
-
-**Option 2: Install from GitHub**
+**Important:** Make sure `~/.mix/escripts` is in your PATH:
 
 ```bash
-mix archive.install github pinetops/track_upstream
+# Add to your ~/.zshrc or ~/.bashrc
+export PATH="$HOME/.mix/escripts:$PATH"
 ```
 
-This installs directly from the GitHub repository (useful for development versions).
+Then you can run it from anywhere:
+
+```bash
+track_upstream <args>
+```
 
 ### Managing the Installation
 
 To update to the latest version:
 
 ```bash
-# From Hex.pm
-mix archive.install hex track_upstream
-
-# From GitHub
-mix archive.install github pinetops/track_upstream --force
+mix escript.install github pinetops/track_upstream --force
 ```
 
 To uninstall:
 
 ```bash
-mix archive.uninstall track_upstream
+mix escript.uninstall track_upstream
 ```
 
-### Local Installation (Within a Project)
-
-Alternatively, add to your project's dependencies in `mix.exs`:
-
-```elixir
-# From Hex.pm (recommended)
-{:track_upstream, "~> 0.1.0"}
-
-# Or from GitHub
-{:track_upstream, github: "pinetops/track_upstream"}
-```
-
-Then:
+To list installed escripts:
 
 ```bash
-mix deps.get
-mix track_upstream <args>
+ls ~/.mix/escripts
 ```
 
 ## Configuration
@@ -125,7 +117,7 @@ IMPORTANT CONSTRAINTS when porting from upstream to downstream:
 ### Basic Syntax
 
 ```bash
-mix track_upstream <upstream_start_rev> <upstream_end_rev> <downstream_rev> --upstream-dir <path>
+track_upstream <upstream_start_rev> <upstream_end_rev> <downstream_rev> --upstream-dir <path>
 ```
 
 ### Arguments
@@ -146,7 +138,7 @@ git checkout -b port-upstream-changes
 
 # 3. Run track_upstream to analyze changes
 # Compare upstream's v2.0.0 tag to current main, against your current main
-mix track_upstream v2.0.0 main main --upstream-dir ../upstream-repo
+track_upstream v2.0.0 main main --upstream-dir ../upstream-repo
 
 # This generates:
 # - UPSTREAM_PORTING_GUIDE.md (your main reference)
@@ -173,13 +165,13 @@ The guide includes:
 
 ```bash
 # Compare specific commit range
-mix track_upstream abc123 def456 main --upstream-dir ../upstream-repo
+track_upstream abc123 def456 main --upstream-dir ../upstream-repo
 
 # Use absolute path for upstream directory
-mix track_upstream v2.0.0 main main --upstream-dir /path/to/upstream-repo
+track_upstream v2.0.0 main main --upstream-dir /path/to/upstream-repo
 
 # Compare against a specific downstream commit
-mix track_upstream v2.0.0 main 5905fd1 --upstream-dir ../upstream-repo
+track_upstream v2.0.0 main 5905fd1 --upstream-dir ../upstream-repo
 ```
 
 ## Requirements
@@ -280,11 +272,11 @@ mix deps.get
 # Compile
 mix compile
 
-# Build Mix archive
-mix archive.build
+# Build escript
+mix escript.build
 
 # Install locally
-mix archive.install
+mix escript.install
 ```
 
 ### Testing
@@ -294,12 +286,12 @@ mix archive.install
 mix format
 
 # Build and test
-mix archive.build
-mix archive.install
+mix escript.build
+mix escript.install
 
 # Test the installed command
 cd /path/to/test/project
-mix track_upstream v2.0.0 main main --upstream-dir ../upstream-repo
+track_upstream v2.0.0 main main --upstream-dir ../upstream-repo
 ```
 
 ## License

@@ -10,14 +10,21 @@ defmodule TrackUpstream.MixProject do
       package: package(),
       deps: deps(),
       source_url: "https://github.com/pinetops/track_upstream",
-      homepage_url: "https://github.com/pinetops/track_upstream"
+      homepage_url: "https://github.com/pinetops/track_upstream",
+      escript: escript()
     ]
   end
 
   def application do
     [
-      extra_applications: [:logger, :crypto, :ssl, :inets],
-      mod: {TrackUpstream.Application, []}
+      extra_applications: [:logger, :crypto, :ssl, :inets]
+    ]
+  end
+
+  defp escript do
+    [
+      main_module: TrackUpstream.CLI.Main,
+      path: "track_upstream"
     ]
   end
 
@@ -43,7 +50,8 @@ defmodule TrackUpstream.MixProject do
   defp deps do
     [
       {:langchain, "~> 0.3.0"},
-      {:jason, "~> 1.4"}
+      {:jason, "~> 1.4"},
+      {:req, "~> 0.5.2"}
     ]
   end
 end
