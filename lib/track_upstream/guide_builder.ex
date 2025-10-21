@@ -33,7 +33,8 @@ defmodule TrackUpstream.GuideBuilder do
 
     **CURRENT STATE:**
     - The Phoenix LiveView dependency has already been updated, causing existing test failures
-    - Run `mix test` to see current failures and prioritize changes based on impact
+    - ALL test failures (pre-existing from the dependency update AND any new failures) MUST be fixed
+    - Run `mix test` to see current failures - these indicate what needs to be ported first
 
     #{Config.porting_constraints()}
 
@@ -82,17 +83,29 @@ defmodule TrackUpstream.GuideBuilder do
     file pairs documented in this guide. Passing tests is necessary but not sufficient - there may be
     improvements, optimizations, and new features that don't affect current tests but should still be ported.
 
-    **Goal:** Port all upstream changes in a series of logical updates, fixing test failures and ensuring
-    no new failures are introduced at each step.
+    **GOAL:** Fix ALL test failures and port ALL upstream changes in a series of logical steps.
 
-    **IMPORTANT:** The Phoenix LiveView dependency has already been updated, so `mix test` will show existing
-    failures. These failures help you PRIORITIZE THE ORDER of porting work, but you will port ALL changes
-    documented in this guide, not just the ones that fix tests.
+    **COMPLETION CRITERIA - ALL MUST BE MET:**
+    1. ✅ ALL tests pass (`mix test` shows 0 failures)
+    2. ✅ ALL upstream deltas ported or explicitly excluded with justification
+    3. ✅ No compilation errors or warnings
+    4. ✅ All changes committed with descriptive messages
+
+    **There are NO "separate issues" or "architectural differences" - all failures must be resolved.**
+
+    **TEST FAILURE EXPECTATIONS:**
+    - The Phoenix LiveView dependency has already been updated, causing pre-existing test failures
+    - These pre-existing failures are NOT out of scope - they MUST be fixed as part of this migration
+    - Pre-existing test failures indicate which changes are most critical to port first
+    - After each step: ALL related test failures should be fixed, and NO new failures should be introduced
+    - If test failures remain after porting all deltas, investigate and fix the root cause
+    - Adapt the implementation to work with LVN's architecture - don't declare it "impossible"
 
     **Recommended Approach:**
 
-    1. **Assess current state** - Run `mix test` to see existing failures. These failures help you PRIORITIZE
-       THE ORDER of porting work, but you will port ALL changes, not just the ones that fix tests.
+    1. **Assess current state** - Run `mix test` to see pre-existing failures from the dependency update.
+       These failures indicate which upstream changes are most critical and should be ported first.
+       ALL of these failures MUST be fixed - they are part of the migration scope, not optional.
 
     2. **Understand the baseline** - Review project-global and file-global transformation rules
 
@@ -212,30 +225,54 @@ defmodule TrackUpstream.GuideBuilder do
             * Run tests - if they fail, FIX THEM (test failures are expected during porting)
             * Fix any compilation errors or warnings
             * Verify no NEW test failures unrelated to this step
-            * **COMMIT THE CHANGES** using git with a descriptive commit message
             * Report completion with test results
             * If the APPROACH is wrong (wrong order, need different prereqs, etc), report that issue
-         d. Wait for the subagent to complete and verify success
-         e. Only then proceed to the next step
+         d. **COMMIT THE CHANGES** - This is MANDATORY after completing each step:
+            * Use git to commit with a clear, descriptive commit message
+            * Commit message should describe WHAT changed and WHY (from a normal dev perspective)
+            * DO NOT reference the migration guide, sections, deltas, or tasks in commit messages
+            * Write as if explaining the change to someone without access to the porting guide
+            * Example: "Add support for slot annotations in rendering engine" NOT "Port section 9 delta 3"
+            * Example: "Fix upload timeout handling" NOT "Complete Task 2 from migration guide"
+            * DO NOT proceed to the next step without committing
+         e. Wait for the subagent to complete and verify success
+         f. **REVISE THE PLAN if new information emerges:**
+            * If tests still fail after completing a step, the plan may be incomplete
+            * If you discover additional related changes that weren't grouped together, revise
+            * Add new tasks or reorganize existing tasks as needed
+            * Document why the plan was revised
+         g. Only then proceed to the next step
        - Each step builds on previous steps, so order matters
+       - **CRITICAL:** Every step MUST end with a git commit before moving to the next step
+       - **ADAPTIVE:** Revise the plan when new information shows it's incomplete or wrong
 
-    7. **Handle unique cases** - Review unique semantic changes that don't follow standard transformation rules
-
-    8. **Validate completeness** - Review ALL functional tasks and verify:
+    7. **Validate completeness** - Review ALL functional tasks and verify:
        ☐ Each task has been completed
        ☐ Each upstream delta across all #{length(analyses)} files was either ported OR explicitly excluded (with reason)
-       ☐ All tests pass
-       ☐ No new compilation warnings
+       ☐ ALL tests pass (0 failures) - see COMPLETION CRITERIA above
+       ☐ No compilation errors or warnings
        ☐ Review the Addendum for newly added files - determine if any are relevant
 
-       If ANY upstream delta was not addressed, return to step 5 and add/adjust tasks.
+       **If ANY criterion is not met:**
+       - Return to step 5 and revise/add tasks
+       - Investigate root causes of remaining failures
+       - Do NOT declare completion with "separate issues" remaining
+       - The migration is ONLY complete when ALL completion criteria are met
 
     ## Common Mistakes to Avoid
 
+    ❌ **Declaring issues as "separate" or "architectural differences"** - ALL failures must be resolved
+    ❌ **Not committing after each step** - Every step MUST end with a git commit
+    ❌ **Assuming pre-existing test failures are out of scope** - They MUST be fixed as part of migration
     ❌ **Stopping when tests pass** - Tests only validate critical paths, not all functionality
     ❌ **Only fixing breaking changes** - You must port improvements/features too
     ❌ **Working file-by-file without considering related changes** - Use functional tasks that span files
     ❌ **Assuming all changes apply** - Some may not be applicable, but you must explicitly determine this
+    ❌ **Sticking to the plan when new information shows it's wrong** - Revise the plan as needed
+    ✅ **Resolve ALL failures - no "separate issues" allowed**
+    ✅ **Revise the plan when tests still fail after completing tasks**
+    ✅ **COMMIT after completing each step with a descriptive message**
+    ✅ **FIX ALL test failures - pre-existing (from dependency update) and new ones**
     ✅ **Systematically work through all functional tasks**
     ✅ **Port ALL upstream deltas unless explicitly excluded by constraints or explicitly determined not applicable**
     ✅ **Document your reasoning for any exclusions or non-applicable changes**
@@ -251,8 +288,9 @@ defmodule TrackUpstream.GuideBuilder do
 
     Read UPSTREAM_PORTING_GUIDE.md sections Y, Z, ... for detailed transformation rules and upstream deltas.
 
-    Current State: The Phoenix LiveView dependency has been updated, causing test failures.
-    Run `mix test` first to see which tests are currently failing.
+    Current State: The Phoenix LiveView dependency has been updated, causing pre-existing test failures.
+    Run `mix test` first to see which tests are currently failing. ALL failures (pre-existing and new)
+    MUST be fixed - they are NOT out of scope.
 
     For each file in this task, review its section in the guide for:
     - FILE-GLOBAL TRANSFORMATION RULES
@@ -269,14 +307,26 @@ defmodule TrackUpstream.GuideBuilder do
     - Address ALL upstream deltas for this TASK (across all affected files)
     - Use transformation rules from the guide
     - Follow the CONSTRAINTS in the guide (see top of UPSTREAM_PORTING_GUIDE.md)
-    - Run tests and FIX any failures (test failures during porting are expected - fix them!)
+    - Run tests and FIX ALL failures - both pre-existing (from dependency update) and new failures
     - Ensure no NEW test failures unrelated to this task
     - Clear all compilation errors and warnings
-    - **COMMIT your changes** with a descriptive commit message before reporting completion
     - Do NOT make changes for files outside this task
+    - **MANDATORY: COMMIT your changes** with a descriptive commit message when done
+      * DO NOT report completion without committing first
+      * Commit message should describe WHAT changed and WHY (from a normal dev perspective)
+      * DO NOT reference migration guide, sections, deltas, or tasks in commit messages
+      * Write as if explaining to someone without access to the porting guide
+      * Good: "Add slot annotation support to rendering engine for better debugging"
+      * Bad: "Port section 9, delta 3 - annotate_slot callback"
+      * Good: "Fix upload timeout handling to prevent indefinite hangs"
+      * Bad: "Complete Task 2 (upload deltas from sections 5-7)"
 
-    IMPORTANT: Test failures are EXPECTED during porting. Your job is to FIX them, not abort.
-    Only stop if the APPROACH is wrong (wrong order, missing prereqs, need to rethink strategy).
+    **CRITICAL - TEST FAILURE HANDLING:**
+    - Pre-existing test failures from the dependency update MUST be fixed (they're not out of scope)
+    - New test failures from your changes MUST be fixed
+    - Test failures are EXPECTED during porting - your job is to FIX them, not abort
+    - Only stop if the APPROACH is wrong (wrong order, missing prereqs, need to rethink strategy)
+    - After this step: ALL related tests should pass, NO new unrelated failures
 
     Available Resources:
     - Porting guide: UPSTREAM_PORTING_GUIDE.md (in current directory)
@@ -290,11 +340,13 @@ defmodule TrackUpstream.GuideBuilder do
     Phoenix LiveView files using the git commands above.
 
     Report when complete with:
-    - Summary of what was ported for each delta
+    - Summary of what was ported for each delta (for internal tracking - OK to reference sections)
     - Any exclusions/non-applicable changes with justification
-    - Test results: which tests were fixed, any remaining test failures
+    - Test results: MUST show ALL tests passing (or explain which failures remain and why)
     - Confirmation that no new unrelated test failures were introduced
-    - **Confirmation that changes were committed** with the commit message
+    - **MANDATORY: Git commit confirmation** - provide the commit hash and message
+      * DO NOT report completion without committing first
+      * Verify the commit message follows the guidelines (no section/delta/task references)
 
     If the APPROACH is wrong (not just test failures), report:
     - Why this step should not be done now
@@ -354,10 +406,11 @@ defmodule TrackUpstream.GuideBuilder do
     TASK: You are helping upgrade LiveView Native to incorporate recent changes to Phoenix LiveView, of which it is a derivative.
 
     CURRENT STATE:
-    - The Phoenix LiveView dependency has already been updated, causing existing test failures
-    - Changes should prioritize fixing these test failures
-    - Changes should be made in logical steps
-    - After each step: ensure no NEW test failures and tests related to the step should pass
+    - The Phoenix LiveView dependency has already been updated, causing pre-existing test failures
+    - ALL test failures (pre-existing and new) MUST be fixed - they are NOT out of scope
+    - Changes should prioritize fixing the pre-existing test failures first
+    - Changes should be made in logical steps with git commits after each step
+    - After each step: ALL related tests should pass, NO new unrelated test failures
 
     #{Config.porting_constraints()}
 
